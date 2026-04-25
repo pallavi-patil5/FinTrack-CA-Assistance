@@ -38,7 +38,13 @@
       </div>
       <div class="actions">
         <button class="icon-btn" onclick="toggleTheme()" title="Toggle theme"><i data-lucide="moon" id="themeIcon"></i></button>
-        <button class="icon-btn" title="Notifications"><i data-lucide="bell"></i></button>
+        <div style="position:relative">
+          <button class="icon-btn" id="bellBtn" onclick="toggleReminders()" title="Reminders"><i data-lucide="bell"></i><span class="notif-dot" id="notifDot" style="display:none"></span></button>
+          <div class="reminders-dropdown" id="remindersDropdown">
+            <div class="rd-header"><span>Due Date Reminders</span><button class="rd-close" onclick="toggleReminders()">&#x2715;</button></div>
+            <div id="remindersList"><div class="rd-empty">Loading...</div></div>
+          </div>
+        </div>
         <div class="icon-btn" style="background:var(--primary-soft);color:var(--primary);font-weight:700;font-size:.8rem;">AD</div>
       </div>
     </header>
@@ -50,9 +56,31 @@
       <div id="dashboard" class="section active">
         <div class="page-header"><h2>Overview</h2></div>
         <div class="card-grid" id="summary"></div>
-        <div class="table-card">
-          <div class="tc-header"><h3>Income vs Expense</h3></div>
-          <div class="chart-wrap" style="padding:20px;height:280px"><canvas id="chart"></canvas></div>
+        <div style="display:grid;grid-template-columns:2fr 1fr;gap:20px;margin-bottom:20px">
+          <div class="table-card">
+            <div class="tc-header"><h3>Income vs Expense Trend</h3></div>
+            <div style="padding:20px;height:260px"><canvas id="chart"></canvas></div>
+          </div>
+          <div class="table-card">
+            <div class="tc-header"><h3>Invoice Status</h3></div>
+            <div style="padding:20px;height:260px;display:flex;align-items:center;justify-content:center"><canvas id="pieChart"></canvas></div>
+          </div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px">
+          <div class="table-card">
+            <div class="tc-header"><h3>Recent Invoices</h3></div>
+            <div class="table-wrap">
+              <table><thead><tr><th>Vendor</th><th>Amount</th><th>Status</th></tr></thead>
+              <tbody id="recentInvoices"></tbody></table>
+            </div>
+          </div>
+          <div class="table-card">
+            <div class="tc-header"><h3>Recent Transactions</h3></div>
+            <div class="table-wrap">
+              <table><thead><tr><th>Type</th><th>Amount</th><th>Category</th></tr></thead>
+              <tbody id="recentTxns"></tbody></table>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -75,20 +103,33 @@
       <!-- INVOICES -->
       <div id="invoices" class="section">
         <div class="page-header"><h2>Invoices</h2></div>
-        <div style="display:flex;gap:12px;align-items:center;margin-bottom:16px;flex-wrap:wrap;">
-          <div class="form-group" style="margin-bottom:0;min-width:200px;">
-            <label>Invoice Type</label>
-            <select id="invoiceTypeSelect">
-              <option value="incoming">Incoming (Expense)</option>
-              <option value="outgoing">Outgoing (Income)</option>
-            </select>
-          </div>
-          <div class="upload-zone" onclick="document.getElementById('fileInput').click()" style="flex:1;margin-bottom:0;">
-            <i data-lucide="upload-cloud"></i>
-            <p><strong>Click to upload</strong> or drag &amp; drop invoice files here</p>
-            <input type="file" id="fileInput" onchange="uploadInvoice()">
+
+        <!-- FILTERS -->
+        <div class="filter-bar">
+          <input id="invSearch" type="text" placeholder="Search vendor..." oninput="applyInvFilters()">
+          <select id="invStatus" onchange="applyInvFilters()">
+            <option value="">All Statuses</option>
+            <option value="Pending">Pending</option>
+            <option value="Paid">Paid</option>
+            <option value="Overdue">Overdue</option>
+          </select>
+          <select id="invType" onchange="applyInvFilters()">
+            <option value="">All Types</option>
+            <option value="incoming">Incoming</option>
+            <option value="outgoing">Outgoing</option>
+          </select>
+          <button class="btn btn-secondary btn-sm" onclick="clearInvFilters()">Clear</button>
+          <div style="margin-left:auto">
+            <div class="upload-zone" onclick="document.getElementById('fileInput').click()" style="margin-bottom:0;padding:10px 16px;display:inline-flex;align-items:center;gap:8px;">
+              <i data-lucide="upload-cloud"></i><span><strong>Upload Invoice</strong></span>
+              <input type="file" id="fileInput" onchange="uploadInvoice()">
+            </div>
           </div>
         </div>
+
+        <!-- STATS ROW -->
+        <div class="inv-stats" id="invStats"></div>
+
         <div class="table-card">
           <div class="table-wrap">
             <table>
