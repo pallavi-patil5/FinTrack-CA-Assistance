@@ -1,0 +1,11 @@
+fastapi
+uvicorn
+pymongo
+python-dotenv
+pytesseract
+pillow
+python-multipart
+reportlab
+itsdangerous
+requests
+bson

@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>StartupSarthi</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/static/css/styles.css">
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://unpkg.com/lucide@latest"></script>
+</head>
+<body>
+
+<div class="app">
+
+  <!-- SIDEBAR -->
+  <nav class="sidebar">
+    <div class="brand"><i data-lucide="rocket"></i>StartupSarthi</div>
+    <a onclick="show('dashboard',this)" class="active"><i data-lucide="layout-dashboard"></i>Dashboard</a>
+    <a onclick="show('transactions',this)"><i data-lucide="arrow-left-right"></i>Transactions</a>
+    <a onclick="show('invoices',this)"><i data-lucide="file-text"></i>Invoices</a>
+    <a onclick="show('vendors',this)"><i data-lucide="users"></i>Vendors</a>
+    <a onclick="show('finance',this)"><i data-lucide="calculator"></i>Finance</a>
+  </nav>
+
+  <!-- MAIN -->
+  <div class="main">
+
+    <!-- TOPBAR -->
+    <header class="topbar">
+      <div class="left">
+        <h1 id="pageTitle">Dashboard</h1>
+        <div class="search">
+          <i data-lucide="search"></i>
+          <input type="text" placeholder="Search..." onkeyup="globalSearch(this.value)">
+        </div>
+      </div>
+      <div class="actions">
+        <button class="icon-btn" onclick="toggleTheme()" title="Toggle theme"><i data-lucide="moon" id="themeIcon"></i></button>
+        <button class="icon-btn" title="Notifications"><i data-lucide="bell"></i></button>
+        <div class="icon-btn" style="background:var(--primary-soft);color:var(--primary);font-weight:700;font-size:.8rem;">AD</div>
+      </div>
+    </header>
+
+    <!-- CONTENT -->
+    <div class="content">
+
+      <!-- DASHBOARD -->
+      <div id="dashboard" class="section active">
+        <div class="page-header"><h2>Overview</h2></div>
+        <div class="card-grid" id="summary"></div>
+        <div class="table-card">
+          <div class="tc-header"><h3>Income vs Expense</h3></div>
+          <div class="chart-wrap" style="padding:20px;height:280px"><canvas id="chart"></canvas></div>
+        </div>
+      </div>
+
+      <!-- TRANSACTIONS -->
+      <div id="transactions" class="section">
+        <div class="page-header">
+          <h2>Transactions</h2>
+          <button class="btn btn-primary" onclick="openTxnModal()"><i data-lucide="plus"></i>Add Transaction</button>
+        </div>
+        <div class="table-card">
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>Type</th><th>Amount</th><th>Category</th><th>Note</th><th>Date</th></tr></thead>
+              <tbody id="txnTable"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- INVOICES -->
+      <div id="invoices" class="section">
+        <div class="page-header"><h2>Invoices</h2></div>
+        <div style="display:flex;gap:12px;align-items:center;margin-bottom:16px;flex-wrap:wrap;">
+          <div class="form-group" style="margin-bottom:0;min-width:200px;">
+            <label>Invoice Type</label>
+            <select id="invoiceTypeSelect">
+              <option value="incoming">Incoming (Expense)</option>
+              <option value="outgoing">Outgoing (Income)</option>
+            </select>
+          </div>
+          <div class="upload-zone" onclick="document.getElementById('fileInput').click()" style="flex:1;margin-bottom:0;">
+            <i data-lucide="upload-cloud"></i>
+            <p><strong>Click to upload</strong> or drag &amp; drop invoice files here</p>
+            <input type="file" id="fileInput" onchange="uploadInvoice()">
+          </div>
+        </div>
+        <div class="table-card">
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>Vendor</th><th>Amount</th><th>Date</th><th>Due Date</th><th>Status</th><th>Type</th></tr></thead>
+              <tbody id="invTable"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- VENDORS -->
+      <div id="vendors" class="section">
+        <div class="page-header"><h2>Vendors</h2></div>
+        <div class="card-grid" id="vendorCards"></div>
+        <div class="table-card">
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>Vendor</th><th>Total Invoices</th><th>Total Amount</th><th>Pending</th><th>Overdue</th></tr></thead>
+              <tbody id="vendorTable"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- FINANCE -->
+      <div id="finance" class="section">
+        <div class="page-header"><h2>Finance Tools</h2></div>
+        <div class="tabs">
+          <button class="tab-btn active" onclick="showFinanceTab('roi',this)">ROI</button>
+          <button class="tab-btn" onclick="showFinanceTab('margin',this)">Profit Margin</button>
+          <button class="tab-btn" onclick="showFinanceTab('cashflow',this)">Cash Flow</button>
+          <button class="tab-btn" onclick="showFinanceTab('emi',this)">EMI</button>
+          <button class="tab-btn" onclick="showFinanceTab('gst',this)">GST</button>
+        </div>
+
+        <!-- ROI -->
+        <div id="tab-roi" class="finance-tab-content active">
+          <div class="form-row">
+            <div class="form-group"><label>Investment</label><input id="roiInv" type="number" placeholder="100000"></div>
+            <div class="form-group"><label>Net Profit</label><input id="roiProfit" type="number" placeholder="25000"></div>
+          </div>
+          <button class="btn btn-primary" onclick="calcROI()">Calculate ROI</button>
+          <div id="roiResult"></div>
+        </div>
+
+        <!-- MARGIN -->
+        <div id="tab-margin" class="finance-tab-content">
+          <div class="form-row">
+            <div class="form-group"><label>Revenue</label><input id="mRevenue" type="number" placeholder="500000"></div>
+            <div class="form-group"><label>Cost</label><input id="mCost" type="number" placeholder="350000"></div>
+          </div>
+          <button class="btn btn-primary" onclick="calcMargin()">Calculate Margin</button>
+          <div id="marginResult"></div>
+        </div>
+
+        <!-- CASH FLOW -->
+        <div id="tab-cashflow" class="finance-tab-content">
+          <div class="form-row">
+            <div class="form-group"><label>Total Inflows</label><input id="cfIn" type="number" placeholder="300000"></div>
+            <div class="form-group"><label>Total Outflows</label><input id="cfOut" type="number" placeholder="200000"></div>
+          </div>
+          <button class="btn btn-primary" onclick="calcCashFlow()">Calculate Cash Flow</button>
+          <div id="cfResult"></div>
+        </div>
+
+        <!-- EMI -->
+        <div id="tab-emi" class="finance-tab-content">
+          <div class="form-row">
+            <div class="form-group"><label>Principal</label><input id="emiPrincipal" type="number" placeholder="500000"></div>
+            <div class="form-group"><label>Annual Rate (%)</label><input id="emiRate" type="number" placeholder="8.5"></div>
+            <div class="form-group"><label>Tenure (months)</label><input id="emiMonths" type="number" placeholder="60"></div>
+          </div>
+          <button class="btn btn-primary" onclick="calcEMI()">Calculate EMI</button>
+          <div id="emiResult"></div>
+        </div>
+
+        <!-- GST -->
+        <div id="tab-gst" class="finance-tab-content">
+          <div class="form-row">
+            <div class="form-group"><label>Base Amount</label><input id="gstAmount" type="number" placeholder="10000"></div>
+            <div class="form-group"><label>GST Rate (%)</label><input id="gstRate" type="number" placeholder="18"></div>
+            <div class="form-group"><label>Type</label><select id="gstType"><option value="false">Exclusive</option><option value="true">Inclusive</option></select></div>
+          </div>
+          <button class="btn btn-primary" onclick="calcGST()">Calculate GST</button>
+          <div id="gstResult"></div>
+        </div>
+
+      </div><!-- /finance -->
+
+    </div><!-- /content -->
+  </div><!-- /main -->
+</div><!-- /app -->
+
+<!-- INVOICE DETAIL PANEL -->
+<div class="panel-overlay" id="invoicePanel" onclick="closePanel('invoicePanel')">
+  <div class="panel" onclick="event.stopPropagation()">
+    <div class="ph">
+      <h3>Invoice Detail</h3>
+      <button class="icon-btn" onclick="closePanel('invoicePanel')"><i data-lucide="x"></i></button>
+    </div>
+    <div id="invoicePanelContent"></div>
+  </div>
+</div>
+
+<!-- VENDOR DETAIL PANEL -->
+<div class="panel-overlay" id="vendorPanel" onclick="closePanel('vendorPanel')">
+  <div class="panel" onclick="event.stopPropagation()">
+    <div class="ph">
+      <h3 id="vendorPanelName"></h3>
+      <button class="icon-btn" onclick="closePanel('vendorPanel')"><i data-lucide="x"></i></button>
+    </div>
+    <div id="vendorPanelContent"></div>
+  </div>
+</div>
+
+<!-- ADD TRANSACTION MODAL -->
+<div class="modal-overlay" id="txnModal" onclick="closeTxnModal()">
+  <div class="modal" onclick="event.stopPropagation()">
+    <div class="modal-header">
+      <h3>Add Transaction</h3>
+      <button class="icon-btn" onclick="closeTxnModal()"><i data-lucide="x"></i></button>
+    </div>
+    <div class="modal-body">
+      <div class="form-row">
+        <div class="form-group"><label>Type</label><select id="txnType"><option value="Income">Income</option><option value="Expense">Expense</option></select></div>
+        <div class="form-group"><label>Amount</label><input id="txnAmount" type="number" placeholder="0.00"></div>
+      </div>
+      <div class="form-group"><label>Category</label><input id="txnCategory" type="text" placeholder="e.g. Sales, Rent"></div>
+      <div class="form-group"><label>Note</label><textarea id="txnNote" placeholder="Optional..."></textarea></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeTxnModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="submitTransaction()">Save Transaction</button>
+    </div>
+  </div>
+</div>
+
+<!-- CHAT -->
+<div class="chat-window" id="chat">
+  <div class="chat-header"><i data-lucide="bot"></i><h4>AI Assistant</h4></div>
+  <div class="chat-body" id="chatMsgs"></div>
+  <div class="chat-footer">
+    <input id="chatInput" placeholder="Ask anything..." onkeydown="if(event.key==='Enter')sendChat()">
+    <button class="btn btn-primary btn-sm" onclick="sendChat()"><i data-lucide="send"></i></button>
+  </div>
+</div>
+<button class="chat-fab" onclick="toggleChat()"><i data-lucide="message-circle"></i></button>
+
+<!-- TOAST -->
+<div class="toast" id="toast"><i data-lucide="check-circle"></i><span id="toastMsg">Saved!</span></div>
+
+<script src="/static/js/dashboard.js"></script>
+</body>
+</html>

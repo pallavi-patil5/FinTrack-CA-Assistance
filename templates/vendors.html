@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Vendors — StartupSarthi</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://unpkg.com/lucide@latest"></script>
+<style>
+:root{--bg:#f8fafc;--surface:#ffffff;--surface-2:#f1f5f9;--text:#0f172a;--text-secondary:#64748b;--border:#e2e8f0;--primary:#4f46e5;--primary-hover:#4338ca;--primary-soft:#eef2ff;--success:#10b981;--success-soft:#ecfdf5;--warning:#f59e0b;--warning-soft:#fffbeb;--danger:#ef4444;--danger-soft:#fef2f2;--shadow:0 1px 3px rgba(0,0,0,0.08),0 4px 12px rgba(0,0,0,0.05);--radius:12px;--radius-sm:8px;}
+body.dark{--bg:#0b1120;--surface:#111827;--surface-2:#1e293b;--text:#f1f5f9;--text-secondary:#94a3b8;--border:#1f2937;}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--text);transition:background .2s,color .2s;}
+.container{display:flex;height:100vh;overflow:hidden}
+.left{width:320px;background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden}
+.left-header{padding:20px 16px 12px;border-bottom:1px solid var(--border)}
+.left-header h2{font-size:1.1rem;font-weight:700;display:flex;align-items:center;gap:8px}
+.left-header h2 i{color:var(--primary);width:20px;height:20px}
+.search-wrap{position:relative;padding:0 16px 12px}
+.search-wrap input{width:100%;padding:8px 12px 8px 34px;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--surface-2);color:var(--text);font-family:inherit;font-size:.88rem;outline:none}
+.search-wrap input:focus{border-color:#94a3b8}
+.search-wrap i{position:absolute;left:24px;top:50%;transform:translateY(-50%);color:var(--text-secondary);width:16px;height:16px}
+.vendor-list{flex:1;overflow-y:auto;padding:0 8px 8px}
+.vendor-item{padding:12px;border-radius:var(--radius-sm);cursor:pointer;transition:all .12s;border:1px solid transparent;margin-bottom:4px}
+.vendor-item:hover{background:var(--surface-2)}
+.vendor-item.active{background:var(--primary-soft);border-color:rgba(79,70,229,0.15)}
+.vendor-item b{font-size:.92rem;display:block;margin-bottom:2px}
+.vendor-item small{color:var(--text-secondary);font-size:.8rem}
+.vendor-item.active b{color:var(--primary)}
+.right{flex:1;padding:24px;overflow-y:auto}
+.page-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px}
+.page-header h2{font-size:1.35rem;font-weight:700}
+.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:16px}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px;box-shadow:var(--shadow)}
+.card b{font-size:1.15rem;display:block;margin-top:4px}
+.card h4{font-size:.75rem;font-weight:600;color:var(--text-secondary);text-transform:uppercase;letter-spacing:.04em}
+.table-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px;box-shadow:var(--shadow);margin-top:16px}
+.table-card h3{font-size:1rem;font-weight:600;margin-bottom:10px}
+table{width:100%;border-collapse:collapse;font-size:.88rem}
+thead th{background:var(--surface-2);color:var(--text-secondary);font-weight:600;text-align:left;padding:10px 12px;font-size:.78rem;text-transform:uppercase;letter-spacing:.03em}
+tbody td{padding:12px;border-bottom:1px solid var(--border)}
+tbody tr:last-child td{border-bottom:none}
+tbody tr{cursor:pointer;transition:background .12s}
+tbody tr:hover{background:var(--surface-2)}
+.badge{display:inline-flex;padding:4px 10px;border-radius:999px;font-size:.75rem;font-weight:600}
+.badge.paid{background:var(--success-soft);color:#065f46}
+.badge.pending{background:var(--warning-soft);color:#92400e}
+.badge.overdue{background:var(--danger-soft);color:#991b1b}
+.badge.income{background:var(--success-soft);color:#065f46}
+.badge.expense{background:var(--danger-soft);color:#991b1b}
+.chart-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px;box-shadow:var(--shadow);margin-top:16px}
+.chart-wrap{position:relative;height:220px}
+.back{position:absolute;top:20px;left:20px;z-index:10}
+.icon-btn{display:flex;align-items:center;justify-content:center;width:36px;height:36px;border-radius:var(--radius-sm);border:1px solid var(--border);background:var(--surface);color:var(--text-secondary);cursor:pointer;transition:all .15s;}
+.icon-btn:hover{background:var(--surface-2);color:var(--text)}
+.icon-btn i{width:18px;height:18px}
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="left">
+    <div class="left-header"><h2><i data-lucide="users"></i>Vendors</h2></div>
+    <div class="search-wrap"><i data-lucide="search"></i><input type="text" placeholder="Search vendor..." onkeyup="searchVendor(this.value)"></div>
+    <div class="vendor-list" id="vendorList"></div>
+  <div class="right">
+    <div class="page-header"><h2 id="vendorName">Select Vendor</h2></div>
+    <div class="grid">
+      <div class="card"><h4>Total Invoices</h4><b id="totalInv">-</b></div>
+      <div class="card"><h4>Total Amount</h4><b id="totalAmt">-</b></div>
+      <div class="card"><h4>Avg Amount</h4><b id="avg">-</b></div>
+      <div class="card"><h4>Pending</h4><b id="pending">-</b></div>
+      <div class="card"><h4>Overdue</h4><b id="overdue">-</b></div>
+      <div class="card"><h4>Last Invoice</h4><b id="lastDate">-</b></div>
+    <div class="chart-card"><div class="chart-wrap"><canvas id="barChart"></canvas></div>
+    <div class="chart-card"><div class="chart-wrap"><canvas id="pieChart"></canvas></div>
+    <div class="table-card">
+      <h3>Invoices</h3>
+      <table><thead><tr><th onclick="sortTable()" style="cursor:pointer">Amount <i data-lucide="arrow-up-down" style="width:12px;height:12px;display:inline;vertical-align:middle"></i></th><th>Status</th><th>Date</th><th>Type</th></tr></thead><tbody id="invoiceTable"></tbody></table>
+    </div>
+</div>
+<script>
+let vendorsData=[],selectedEl=null,currentInvoices=[],barChart=null,pieChart=null;
+document.addEventListener('DOMContentLoaded',()=>{if(typeof lucide!=='undefined')lucide.createIcons();loadVendors();});
+async function loadVendors(){const res=await fetch("/vendors");vendorsData=await res.json();renderVendors(vendorsData);}
+function renderVendors(data){document.getElementById("vendorList").innerHTML=data.map(v=>`<div class="vendor-item" onclick="selectVendor('${v.vendor_id}',this)"><b>${v.name}</b><small>Invoices: ${v.total_invoices} &bull; Rs.${(v.total_amount||0).toFixed(2)}</small></div>`).join('');}
+function searchVendor(q){renderVendors(vendorsData.filter(v=>v.name.toLowerCase().includes(q.toLowerCase())));}
+async function selectVendor(id,el){if(selectedEl)selectedEl.classList.remove("active");el.classList.add("active");selectedEl=el;const d=await fetch(`/vendor/${id}/detail`).then(r=>r.json());currentInvoices=d.invoices;document.getElementById("vendorName").innerText=el.querySelector("b").innerText;document.getElementById("totalInv").innerText=d.total_invoices;document.getElementById("totalAmt").innerText="Rs."+(d.total_amount||0).toFixed(2);document.getElementById("avg").innerText="Rs."+(d.avg_amount||0).toFixed(2);document.getElementById("pending").innerText=d.pending;document.getElementById("overdue").innerText=d.overdue;document.getElementById("lastDate").innerText=d.invoices.length?d.invoices[d.invoices.length-1].date:"-";renderTable(d.invoices);drawCharts(d.invoices);}
+function renderTable(invoices){document.getElementById("invoiceTable").innerHTML=invoices.map(i=>{const catCls=(i.category||'Expense').toLowerCase();return`<tr onclick="openInvoice('${i.id||""}')"><td>Rs.${parseFloat(i.amount||0).toFixed(2)}</td><td><span class="badge ${(i.status||'pending').toLowerCase()}">${i.status}</span></td><td>${i.date||'-'}</td><td><span class="badge ${catCls}">${i.category||'Expense'}</span></td></tr>`}).join('');}
+function sortTable(){currentInvoices.sort((a,b)=>b.amount-a.amount);renderTable(currentInvoices);}
+function openInvoice(id){if(!id)return;window.location.href="/invoice/"+id;}
+function drawCharts(invoices){const amounts=invoices.map(i=>i.amount);const labels=invoices.map((_,i)=>"Inv "+(i+1));const paid=invoices.filter(i=>i.status==="Paid").length;const pending=invoices.filter(i=>i.status==="Pending").length;const overdue=invoices.filter(i=>i.status==="Overdue").length;if(barChart)barChart.destroy();if(pieChart)pieChart.destroy();barChart=new Chart(document.getElementById("barChart"),{type:"bar",data:{labels:labels,datasets:[{label:"Amount",data:amounts,backgroundColor:"#4f46e5",borderRadius:4}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}}}});pieChart=new Chart(document.getElementById("pieChart"),{type:"pie",data:{labels:["Paid","Pending","Overdue"],datasets:[{data:[paid,pending,overdue],backgroundColor:["#10b981","#f59e0b","#ef4444"]}]},options:{responsive:true,maintainAspectRatio:false}});}
+</script>
+</body>
+</html>

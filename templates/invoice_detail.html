@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Invoice Detail — StartupSarthi</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/lucide@latest"></script>
+<style>
+:root{--bg:#f8fafc;--surface:#ffffff;--surface-2:#f1f5f9;--text:#0f172a;--text-secondary:#64748b;--border:#e2e8f0;--primary:#4f46e5;--primary-hover:#4338ca;--primary-soft:#eef2ff;--success:#10b981;--success-soft:#ecfdf5;--warning:#f59e0b;--warning-soft:#fffbeb;--danger:#ef4444;--danger-soft:#fef2f2;--shadow:0 1px 3px rgba(0,0,0,0.08),0 4px 12px rgba(0,0,0,0.05);--radius:12px;--radius-sm:8px;}
+body.dark{--bg:#0b1120;--surface:#111827;--surface-2:#1e293b;--text:#f1f5f9;--text-secondary:#94a3b8;--border:#1f2937;}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--text);padding:24px;transition:background .2s,color .2s;}
+.container{max-width:960px;margin:0 auto}
+.header{display:flex;justify-content:space-between;align-items:center;margin-bottom:24px;flex-wrap:wrap;gap:12px}
+.header h2{font-size:1.35rem;font-weight:700;display:flex;align-items:center;gap:10px}
+.actions{display:flex;gap:10px}
+.btn{display:inline-flex;align-items:center;gap:8px;padding:8px 16px;border-radius:var(--radius-sm);font-size:.86rem;font-weight:600;border:1px solid transparent;cursor:pointer;transition:all .15s;font-family:inherit;}
+.btn-secondary{background:var(--surface);color:var(--text);border-color:var(--border)}
+.btn-secondary:hover{background:var(--surface-2)}
+.btn-primary{background:var(--primary);color:#fff}
+.btn-primary:hover{background:var(--primary-hover)}
+.btn i{width:16px;height:16px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:16px;margin-bottom:24px}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:20px;box-shadow:var(--shadow)}
+.card h4{font-size:.8rem;font-weight:600;color:var(--text-secondary);margin-bottom:10px;text-transform:uppercase;letter-spacing:.04em}
+.card p{margin-bottom:6px;font-size:.95rem}
+.card p b{font-size:1.1rem}
+.status{display:inline-flex;padding:4px 10px;border-radius:999px;font-size:.75rem;font-weight:600;margin-top:4px}
+.status.paid{background:var(--success-soft);color:#065f46}
+.status.pending{background:var(--warning-soft);color:#92400e}
+.status.overdue{background:var(--danger-soft);color:#991b1b}
+.table-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:20px;box-shadow:var(--shadow)}
+table{width:100%;border-collapse:collapse;font-size:.88rem;margin-top:8px}
+th,td{padding:12px;border-bottom:1px solid var(--border);text-align:left}
+th{background:var(--surface-2);color:var(--text-secondary);font-weight:600;font-size:.8rem;text-transform:uppercase;letter-spacing:.03em}
+.total{text-align:right;font-weight:700;margin-top:12px;font-size:1.1rem}
+.back{position:fixed;top:20px;left:20px;z-index:10}
+.icon-btn{display:flex;align-items:center;justify-content:center;width:36px;height:36px;border-radius:var(--radius-sm);border:1px solid var(--border);background:var(--surface);color:var(--text-secondary);cursor:pointer;transition:all .15s;}
+.icon-btn:hover{background:var(--surface-2);color:var(--text)}
+.icon-btn i{width:18px;height:18px}
+</style>
+</head>
+<body>
+<button class="icon-btn back" onclick="history.back()" title="Back"><i data-lucide="arrow-left"></i></button>
+<div class="container">
+  <div class="header">
+    <h2><i data-lucide="file-text"></i><span id="title">Invoice</span></h2>
+    <div class="actions">
+      <button class="btn btn-secondary" onclick="downloadPDF()"><i data-lucide="download"></i>Download PDF</button>
+      <button class="btn btn-primary"><i data-lucide="pencil"></i>Edit</button>
+    </div>
+  <div class="grid">
+    <div class="card"><h4>Vendor Information</h4><p><b id="vendor">-</b></p></div>
+    <div class="card"><h4>Invoice Details</h4><p><b id="amount">-</b></p><p>Date: <span id="date">-</span></p><span id="status" class="status">-</span></div>
+    <div class="card"><h4>Payment Info</h4><p>Due: <span id="due">-</span></p></div>
+    <div class="card"><h4>Type &amp; Category</h4><p>Type: <b id="invType">-</b></p><p>Category: <span id="invCategory" class="status">-</span></p></div>
+  </div>
+  <div class="table-card">
+    <h4>Invoice Line Items</h4>
+    <table><thead><tr><th>#</th><th>Description</th><th>Qty</th><th>Price</th><th>Amount</th></tr></thead><tbody id="items"></tbody></table>
+    <div class="total" id="total">Total: Rs.0</div>
+</div>
+<script>
+const API="http://localhost:8000";
+const id=window.location.pathname.split("/").pop();
+document.addEventListener('DOMContentLoaded',()=>{if(typeof lucide!=='undefined')lucide.createIcons();loadInvoice();});
+async function loadInvoice(){
+  try{
+    const res=await fetch(API+"/invoice/detail/"+id);
+    if(!res.ok){document.getElementById("title").innerText="Invoice Not Found";return;}
+    const d=await res.json();
+    document.getElementById("title").innerText="Invoice #"+(d._id||id).slice(-6).toUpperCase();
+    document.getElementById("vendor").innerText=d.vendor_name||"Unknown";
+    const amt=parseFloat(d.total_amount)||0;
+    document.getElementById("amount").innerText="Rs."+amt.toFixed(2);
+    document.getElementById("date").innerText=d.date||"-";
+    document.getElementById("due").innerText=d.due_date&&d.due_date!=="None"?d.due_date:"-";
+    const stEl=document.getElementById("status");
+    stEl.innerText=d.status||"Pending";
+    stEl.className="status "+(d.status||"pending").toLowerCase();
+    document.getElementById("invType").innerText=(d.invoice_type||"Incoming").charAt(0).toUpperCase()+(d.invoice_type||"Incoming").slice(1);
+    const catEl=document.getElementById("invCategory");
+    const category=d.category||"Expense";
+    catEl.innerText=category;
+    catEl.className="status "+category.toLowerCase();
+    const items=d.items||[];
+    document.getElementById("items").innerHTML=items.map((it,i)=>`<tr><td>${i+1}</td><td>${it.description||"-"}</td><td>${it.qty||1}</td><td>Rs.${parseFloat(it.price||0).toFixed(2)}</td><td>Rs.${((it.qty||1)*parseFloat(it.price||0)).toFixed(2)}</td></tr>`).join('');
+    if(items.length===0)document.getElementById("items").innerHTML='<tr><td colspan="5" style="text-align:center;color:var(--text-secondary);padding:20px">No line items</td></tr>';
+    document.getElementById("total").innerText="Total: Rs."+amt.toFixed(2);
+  }catch(e){console.error(e);document.getElementById("title").innerText="Error loading invoice";}
+}
+function downloadPDF(){window.open(API+"/report/pdf","_blank");}
+</script>
+</body>
+</html>
