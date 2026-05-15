@@ -93,7 +93,7 @@
         <div class="table-card">
           <div class="table-wrap">
             <table>
-              <thead><tr><th>Type</th><th>Amount</th><th>Category</th><th>Note</th><th>Date</th></tr></thead>
+              <thead><tr><th>Type</th><th>Amount</th><th>Category</th><th>Note</th><th>Date</th><th>Actions</th></tr></thead>
               <tbody id="txnTable"></tbody>
             </table>
           </div>
@@ -242,6 +242,29 @@
       <button class="icon-btn" onclick="closePanel('vendorPanel')"><i data-lucide="x"></i></button>
     </div>
     <div id="vendorPanelContent"></div>
+  </div>
+</div>
+
+<!-- EDIT TRANSACTION MODAL -->
+<div class="modal-overlay" id="editTxnModal" onclick="closeEditTxnModal()">
+  <div class="modal" onclick="event.stopPropagation()">
+    <div class="modal-header">
+      <h3>Edit Transaction</h3>
+      <button class="icon-btn" onclick="closeEditTxnModal()"><i data-lucide="x"></i></button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="editTxnId">
+      <div class="form-row">
+        <div class="form-group"><label>Type</label><select id="editTxnType"><option value="Income">Income</option><option value="Expense">Expense</option></select></div>
+        <div class="form-group"><label>Amount</label><input id="editTxnAmount" type="number" placeholder="0.00"></div>
+      </div>
+      <div class="form-group"><label>Category</label><input id="editTxnCategory" type="text" placeholder="e.g. Sales, Rent"></div>
+      <div class="form-group"><label>Note</label><textarea id="editTxnNote" placeholder="Optional..."></textarea></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeEditTxnModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="saveEditTxn()">Save Changes</button>
+    </div>
   </div>
 </div>
 

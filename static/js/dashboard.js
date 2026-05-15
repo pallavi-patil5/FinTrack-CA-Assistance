@@ -131,12 +131,69 @@ async function loadTransactions(){
   try{
     const tx=await fetch(API+"/transactions/admin").then(r=>r.json());
     const tb=document.getElementById("txnTable");if(!tb)return;
-    tb.innerHTML=tx.transactions.map(t=>`<tr><td><span class="badge ${t.type==='Income'?'paid':'rose'}">${t.type}</span></td><td class="amount">Rs.${parseFloat(t.amount||0).toFixed(2)}</td><td>${t.category}</td><td>${t.note||'-'}</td><td>${t.date||'-'}</td></tr>`).join('');
+    tb.innerHTML=tx.transactions.map(t=>{
+      const cat=(t.category||'').replace(/'/g,"&#39;");
+      const note=(t.note||'').replace(/'/g,"&#39;");
+      return `<tr>
+        <td><span class="badge ${t.type==='Income'?'paid':'rose'}">${t.type}</span></td>
+        <td class="amount">Rs.${parseFloat(t.amount||0).toFixed(2)}</td>
+        <td>${t.category||'-'}</td>
+        <td>${t.note||'-'}</td>
+        <td>${t.date||'-'}</td>
+        <td style="text-align:center;min-width:140px;white-space:nowrap;" onclick="event.stopPropagation()">
+          <div style="display:flex;gap:6px;justify-content:center;">
+            <button class="txn-btn edit" title="Edit Transaction" onclick="openEditTxnModal('${t._id}','${t.type}',${t.amount},'${cat}','${note}')">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+              Edit
+            </button>
+            <button class="txn-btn delete" title="Delete Transaction" onclick="deleteTxn('${t._id}')">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg>
+              Delete
+            </button>
+          </div>
+        </td>
+      </tr>`;
+    }).join('');
   }catch(e){console.error(e)}
 }
 
 function openTxnModal(){document.getElementById("txnModal").classList.add("open");}
 function closeTxnModal(){document.getElementById("txnModal").classList.remove("open");}
+
+function openEditTxnModal(id, type, amount, category, note){
+  document.getElementById("editTxnId").value = id;
+  document.getElementById("editTxnType").value = type;
+  document.getElementById("editTxnAmount").value = amount;
+  document.getElementById("editTxnCategory").value = category;
+  document.getElementById("editTxnNote").value = note;
+  document.getElementById("editTxnModal").classList.add("open");
+}
+function closeEditTxnModal(){document.getElementById("editTxnModal").classList.remove("open");}
+
+async function saveEditTxn(){
+  const id=document.getElementById("editTxnId").value;
+  const payload={
+    type: document.getElementById("editTxnType").value,
+    amount: parseFloat(document.getElementById("editTxnAmount").value||0),
+    category: document.getElementById("editTxnCategory").value,
+    note: document.getElementById("editTxnNote").value
+  };
+  if(!payload.amount||!payload.category){showToast("Amount and category required","error");return;}
+  try{
+    const r=await fetch(API+"/transactions/update/"+id,{method:"PUT",headers:{"Content-Type":"application/json"},body:JSON.stringify(payload)});
+    if(!r.ok)throw new Error("Failed");
+    showToast("Transaction updated!");closeEditTxnModal();loadTransactions();load();
+  }catch(e){showToast("Error updating","error");}
+}
+
+async function deleteTxn(id){
+  if(!confirm("Delete this transaction?"))return;
+  try{
+    const r=await fetch(API+"/transactions/delete/"+id,{method:"DELETE"});
+    if(!r.ok)throw new Error("Failed");
+    showToast("Transaction deleted!");loadTransactions();load();
+  }catch(e){showToast("Error deleting","error");}
+}
 
 async function submitTransaction(){
   const type=document.getElementById("txnType").value;

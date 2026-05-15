@@ -46,9 +46,11 @@ body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--t
 .table-card .tc-header{display:flex;align-items:center;justify-content:space-between;padding:16px 20px;border-bottom:1px solid var(--border);gap:12px;flex-wrap:wrap;}
 .table-card .tc-header h3{font-size:1rem;font-weight:600}
 .table-wrap{overflow-x:auto}
-table{width:100%;border-collapse:collapse;font-size:.88rem}
+table{width:100%;border-collapse:collapse;font-size:.88rem;table-layout:fixed;}
 thead th{background:var(--surface-2);color:var(--text-secondary);font-weight:600;text-align:left;padding:12px 20px;white-space:nowrap;font-size:.8rem;text-transform:uppercase;letter-spacing:.03em;}
-tbody td{padding:14px 20px;border-bottom:1px solid var(--border);color:var(--text);vertical-align:middle}
+thead th:last-child {width:160px;text-align:center;}
+tbody td{padding:14px 20px;border-bottom:1px solid var(--border);color:var(--text);vertical-align:middle;}
+tbody td:last-child {width:160px;text-align:center;white-space:nowrap;}
 tbody tr:last-child td{border-bottom:none}
 tbody tr{cursor:pointer;transition:background .12s}
 tbody tr:hover{background:var(--surface-2)}
@@ -168,3 +170,11 @@ body.dark .badge.expense{color:#f87171}
   .dashboard-charts{grid-template-columns:1fr!important;}
   .dashboard-tables{grid-template-columns:1fr!important;}
 }
+
+/* TXN ACTION BUTTONS */
+.txn-btn{display:inline-flex;align-items:center;justify-content:center;min-width:70px;padding:8px 12px;border-radius:var(--radius-sm);border:1px solid var(--border);background:var(--surface);cursor:pointer;transition:all .15s;font-size:13px;font-weight:500;}
+.txn-btn svg{margin-right:4px;}
+.txn-btn.edit{color:#4f46e5;}
+.txn-btn.edit:hover{background:var(--primary-soft);border-color:#c7d2fe;}
+.txn-btn.delete{color:#ef4444;}
+.txn-btn.delete:hover{background:var(--danger-soft);border-color:#fca5a5;}
