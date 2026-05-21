@@ -213,14 +213,31 @@ async function submitTransaction(){
 let allInvoices = [];
 
 async function uploadInvoice(){
-  const file=document.getElementById("fileInput").files[0];
-  if(!file){showToast("Select a file first","error");return;}
-  const fd=new FormData();fd.append("file",file);
+  const file = document.getElementById("fileInput").files[0];
+  if(!file) return;
+  const sel = document.getElementById("invoiceTypeSelect");
+  const invoiceType = sel ? sel.value : "incoming";
+  console.log("[UPLOAD] invoice_type:", invoiceType);
+  const fd = new FormData();
+  fd.append("file", file);
+  fd.append("invoice_type", invoiceType);
+  showToast("Processing invoice...");
   try{
-    const r=await fetch(API+"/upload-invoice",{method:"POST",body:fd});
+    const r = await fetch(API+"/upload-invoice", {method:"POST", body:fd});
     if(!r.ok){const err=await r.json();showToast("Upload failed: "+(err.detail||r.statusText),"error");return;}
-    showToast("Invoice processed!");await loadInvoices();load();
-  }catch(e){showToast("Error uploading: "+e.message,"error");}
+    const data = await r.json();
+    const inv = data.invoice||{};
+    const txnType = invoiceType==="outgoing" ? "Income" : "Expense";
+    const category = invoiceType==="outgoing" ? "Invoice Income" : "Invoice Expense";
+    await fetch(API+"/transactions/add",{
+      method:"POST", headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({type:txnType, amount:parseFloat(inv.total_amount||0), category, note:`Invoice - ${inv.vendor_name||'Unknown'}`})
+    });
+    showToast(`Invoice uploaded as ${txnType}!`);
+    document.getElementById("fileInput").value="";
+    await Promise.all([loadInvoices(), loadTransactions()]);
+    load();
+  }catch(e){showToast("Error: "+e.message,"error");}
 }
 
 async function loadInvoices(){

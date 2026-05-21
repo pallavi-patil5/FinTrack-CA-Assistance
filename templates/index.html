@@ -119,10 +119,14 @@
             <option value="outgoing">Outgoing</option>
           </select>
           <button class="btn btn-secondary btn-sm" onclick="clearInvFilters()">Clear</button>
-          <div style="margin-left:auto">
-            <div class="upload-zone" onclick="document.getElementById('fileInput').click()" style="margin-bottom:0;padding:10px 16px;display:inline-flex;align-items:center;gap:8px;">
+          <div style="margin-left:auto;display:flex;align-items:center;gap:8px">
+            <select id="invoiceTypeSelect" style="padding:8px 12px;border:1px solid var(--border);border-radius:8px;background:var(--bg-card);color:var(--text);font-size:.875rem">
+              <option value="incoming">Expense (Incoming)</option>
+              <option value="outgoing">Income (Outgoing)</option>
+            </select>
+            <div class="upload-zone" onclick="document.getElementById('fileInput').click()" style="margin-bottom:0;padding:10px 16px;display:inline-flex;align-items:center;gap:8px;cursor:pointer">
               <i data-lucide="upload-cloud"></i><span><strong>Upload Invoice</strong></span>
-              <input type="file" id="fileInput" onchange="uploadInvoice()">
+              <input type="file" id="fileInput" style="display:none" onchange="uploadInvoice()">
             </div>
           </div>
         </div>

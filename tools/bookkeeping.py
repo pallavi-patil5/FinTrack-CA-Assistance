@@ -1,4 +1,4 @@
-from config.settings import transactions_col, invoices_col
+from config.settings import transactions_col
 from datetime import datetime
 
 def add_transaction(type_, amount, category, note=""):
@@ -35,19 +35,6 @@ def get_summary():
     txns = get_all_transactions()
     income = sum(t["amount"] for t in txns if t["type"] == "Income")
     expense = sum(t["amount"] for t in txns if t["type"] == "Expense")
-
-    # Include invoices in totals
-    for inv in invoices_col.find():
-        try:
-            amount = float(inv.get("total_amount") or 0)
-        except:
-            amount = 0
-        invoice_type = inv.get("invoice_type") or "incoming"
-        if invoice_type == "outgoing":
-            income += amount
-        else:
-            expense += amount
-
     return {
         "total_income": round(income, 2),
         "total_expense": round(expense, 2),

@@ -8,26 +8,32 @@ def get_invoice_category(invoice_type):
 def create_invoice(data, invoice_type="incoming"):
     vendor_name = data.get("vendor_name", "Unknown")
     get_or_create_vendor(vendor_name)
-    
+    # LLM may return 'amount' or 'total_amount'
+    amount = data.get("total_amount") or data.get("amount") or 0
+    try:
+        amount = float(amount)
+    except:
+        amount = 0
     invoice = {
         "vendor_name": vendor_name,
-        "total_amount": data.get("amount", 0),
+        "total_amount": amount,
         "date": data.get("date", ""),
         "due_date": data.get("due_date", ""),
         "status": data.get("status", "Pending"),
         "invoice_type": invoice_type,
+        "category": get_invoice_category(invoice_type),
         "created_at": datetime.utcnow()
     }
     result = invoices_col.insert_one(invoice)
     return {
+        "_id": str(result.inserted_id),
         "vendor_name": invoice["vendor_name"],
         "total_amount": invoice["total_amount"],
         "date": invoice["date"],
         "due_date": invoice["due_date"],
         "status": invoice["status"],
         "invoice_type": invoice["invoice_type"],
-        "category": get_invoice_category(invoice["invoice_type"]),
-        "_id": str(result.inserted_id)
+        "category": get_invoice_category(invoice["invoice_type"])
     }
 
 def get_all_invoices():
@@ -47,6 +53,6 @@ def get_all_invoices():
             "due_date": str(inv.get("due_date") or ""),
             "status": status,
             "invoice_type": invoice_type,
-            "category": get_invoice_category(invoice_type)
+            "category": inv.get("category") or get_invoice_category(invoice_type)
         })
     return invoices

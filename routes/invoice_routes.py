@@ -83,12 +83,12 @@ def invoice_pdf(invoice_id: str):
 @router.post("/upload-invoice")
 async def upload_invoice(file: UploadFile = File(...), invoice_type: str = Form("incoming")):
     try:
+        print(f"[UPLOAD] invoice_type received: {invoice_type}")
         file_path = os.path.join(UPLOAD_DIR, file.filename)
         with open(file_path, "wb") as buffer:
             shutil.copyfileobj(file.file, buffer)
         result = process_invoice(file_path, invoice_type=invoice_type)
         result.pop("created_at", None)
-        result.pop("_id", None)
         return {"message": "Invoice processed successfully", "invoice": result}
     except Exception as e:
         return JSONResponse(status_code=500, content={"detail": str(e)})
