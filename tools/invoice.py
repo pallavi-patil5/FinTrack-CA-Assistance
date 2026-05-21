@@ -36,10 +36,20 @@ def create_invoice(data, invoice_type="incoming"):
         "category": get_invoice_category(invoice["invoice_type"])
     }
 
+def resolve_status(status: str, due_date) -> str:
+    if status in ("Paid", "Overdue"):
+        return status
+    try:
+        due = datetime.strptime(str(due_date).strip(), "%Y-%m-%d")
+        if due.date() < datetime.utcnow().date():
+            return "Overdue"
+    except:
+        pass
+    return status or "Pending"
+
 def get_all_invoices():
     invoices = []
     for inv in invoices_col.find():
-        status = inv.get("status") or "Pending"
         invoice_type = inv.get("invoice_type") or "incoming"
         try:
             amount = float(inv.get("total_amount") or 0)
@@ -51,7 +61,7 @@ def get_all_invoices():
             "total_amount": round(amount, 2),
             "date": str(inv.get("date") or ""),
             "due_date": str(inv.get("due_date") or ""),
-            "status": status,
+            "status": resolve_status(inv.get("status"), inv.get("due_date")),
             "invoice_type": invoice_type,
             "category": inv.get("category") or get_invoice_category(invoice_type)
         })

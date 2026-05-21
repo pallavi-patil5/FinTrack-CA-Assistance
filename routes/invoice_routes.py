@@ -4,7 +4,7 @@ import shutil
 import os
 
 from services.invoice_service import process_invoice
-from tools.invoice import get_all_invoices
+from tools.invoice import get_all_invoices, resolve_status
 from tools.reports import generate_invoice_pdf
 from config.settings import UPLOAD_DIR, invoices_col
 from bson import ObjectId
@@ -45,7 +45,7 @@ def invoice_detail(invoice_id: str):
             "org_code": inv.get("org_code") or "-",
             "date": str(inv.get("date") or "-"),
             "due_date": str(inv.get("due_date") or "-"),
-            "status": inv.get("status") or "Pending",
+            "status": resolve_status(inv.get("status"), inv.get("due_date")),
             "invoice_type": invoice_type,
             "category": "Income" if invoice_type == "outgoing" else "Expense",
             "line_items": inv.get("line_items") or []

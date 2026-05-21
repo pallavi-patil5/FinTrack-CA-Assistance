@@ -4,9 +4,10 @@ pymongo
 python-dotenv
 pytesseract
 pillow
-pdf2image
+pymupdf
 python-multipart
 reportlab
 itsdangerous
 requests
 bsonw
+python-docx
