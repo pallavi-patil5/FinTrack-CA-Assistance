@@ -178,3 +178,23 @@ body.dark .badge.expense{color:#f87171}
 .txn-btn.edit:hover{background:var(--primary-soft);border-color:#c7d2fe;}
 .txn-btn.delete{color:#ef4444;}
 .txn-btn.delete:hover{background:var(--danger-soft);border-color:#fca5a5;}
+
+/* REMINDER WIDGETS */
+.rem-widgets{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:14px;margin-bottom:24px;}
+.rem-widget{display:flex;align-items:center;gap:12px;padding:14px 16px;border-radius:var(--radius);border:1px solid var(--border);background:var(--surface);box-shadow:var(--shadow);cursor:pointer;transition:transform .15s;}
+.rem-widget:hover{transform:translateY(-2px);}
+.rw-icon{font-size:1.4rem;flex-shrink:0;}
+.rw-body{min-width:0;}
+.rw-num{font-size:1.3rem;font-weight:700;line-height:1;}
+.rw-label{font-size:.72rem;color:var(--text-secondary);font-weight:500;margin-top:2px;text-transform:uppercase;letter-spacing:.04em;}
+.rem-widget.info{border-left:3px solid var(--primary);}
+.rem-widget.warning{border-left:3px solid var(--warning);}
+.rem-widget.critical{border-left:3px solid #f97316;}
+.rem-widget.overdue{border-left:3px solid var(--danger);}
+.rem-widget.amount{border-left:3px solid var(--success);}
+
+/* VENDOR EMAIL EDIT */
+.vendor-email-row{align-items:center;flex-wrap:wrap;gap:8px;}
+.vendor-email-edit{display:flex;align-items:center;gap:8px;flex:1;justify-content:flex-end;}
+.vendor-email-edit input{padding:7px 10px;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--surface-2);color:var(--text);font-family:inherit;font-size:.85rem;outline:none;width:200px;}
+.vendor-email-edit input:focus{border-color:#94a3b8;}

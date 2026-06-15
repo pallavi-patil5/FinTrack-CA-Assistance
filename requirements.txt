@@ -11,3 +11,7 @@ itsdangerous
 requests
 bsonw
 python-docx
+opencv-python
+numpy
+easyocr
+apscheduler

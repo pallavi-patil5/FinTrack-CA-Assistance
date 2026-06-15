@@ -39,7 +39,7 @@ def invoice_detail(invoice_id: str):
             "taxable_amount": f(inv.get("taxable_amount")),
             "gst_rate": f(inv.get("gst_rate")),
             "cgst": cgst, "sgst": sgst, "igst": igst,
-            "total_tax": round(cgst + sgst + igst, 2),
+            "total_tax": round(float(inv.get("total_tax") or 0) or cgst + sgst + igst, 2),
             "currency": inv.get("currency") or "INR",
             "payment_terms": inv.get("payment_terms") or "-",
             "org_code": inv.get("org_code") or "-",

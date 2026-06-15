@@ -13,8 +13,7 @@ async function apiPost(path,body){
 document.addEventListener('DOMContentLoaded',()=>{
   if(typeof lucide!=='undefined')lucide.createIcons();
   load();loadInvoices();loadVendors();loadTransactions();
-  // build reminder dot after invoices load
-  setTimeout(()=>buildReminders(),2000);
+  loadReminderWidgets();
 });
 
 function show(id,el){
@@ -351,10 +350,27 @@ async function openVendorPanel(vid,name){
       <div class="detail-row"><span class="detail-label">Avg Amount</span><span class="detail-val">Rs.${parseFloat(d.avg_amount||0).toFixed(2)}</span></div>
       <div class="detail-row"><span class="detail-label">Pending</span><span class="detail-val">${d.pending}</span></div>
       <div class="detail-row"><span class="detail-label">Overdue</span><span class="detail-val">${d.overdue}</span></div>
+      <div class="detail-row vendor-email-row">
+        <span class="detail-label">Vendor Email</span>
+        <div class="vendor-email-edit">
+          <input id="vendorEmailInput" type="email" placeholder="vendor@example.com" value="${d.email||''}">
+          <button class="btn btn-primary btn-sm" onclick="saveVendorEmail('${vid}')">Save</button>
+        </div>
+      </div>
       <h4 style="margin-top:16px;font-size:.85rem;text-transform:uppercase;letter-spacing:.04em;color:var(--text-secondary)">Invoices</h4>
       <table class="vendor-inv-table"><thead><tr><th>Amount</th><th>Status</th><th>Date</th><th>Type</th></tr></thead><tbody>${invRows}</tbody></table>`;
     document.getElementById("vendorPanel").classList.add("open");
   }catch(e){console.error(e)}
+}
+
+async function saveVendorEmail(vid){
+  const email=document.getElementById("vendorEmailInput")?.value?.trim();
+  if(!email){showToast("Enter a valid email","error");return;}
+  try{
+    const r=await fetch(API+`/vendor/${vid}/email`,{method:"PUT",headers:{"Content-Type":"application/json"},body:JSON.stringify({email})});
+    if(!r.ok)throw new Error("Failed");
+    showToast("Vendor email saved!");
+  }catch(e){showToast("Error saving email","error");}
 }
 
 function closePanel(id){document.getElementById(id).classList.remove("open");}
@@ -420,66 +436,69 @@ async function calcGST(){
 function toggleReminders(){
   const dd=document.getElementById("remindersDropdown");
   dd.classList.toggle("open");
-  if(dd.classList.contains("open")) buildReminders();
+  if(dd.classList.contains("open")) loadRemindersDropdown();
 }
 
-function parseDueDate(str){
-  if(!str||str==='-'||str==='None'||str==='null')return null;
-  // try common formats: DD/MM/YYYY, DD-MM-YYYY, YYYY-MM-DD, DD.MM.YYYY
-  let d=new Date(str);
-  if(!isNaN(d))return d;
-  const parts=str.split(/[\/\-\.]/);
-  if(parts.length===3){
-    // try DD/MM/YYYY
-    d=new Date(`${parts[2]}-${parts[1].padStart(2,'0')}-${parts[0].padStart(2,'0')}`);
-    if(!isNaN(d))return d;
-  }
-  return null;
-}
-
-function buildReminders(){
+async function loadRemindersDropdown(){
   const list=document.getElementById("remindersList");
-  const today=new Date();today.setHours(0,0,0,0);
-  const reminders=[];
+  try{
+    const d=await fetch(API+"/reminders/dashboard").then(r=>r.json());
+    const all=[...d.overdue,...d.upcoming];
+    const dot=document.getElementById("notifDot");
+    if(dot)dot.style.display=all.length?'block':'none';
+    if(!all.length){list.innerHTML='<div class="rd-empty">✅ No upcoming due dates</div>';return;}
+    const icons={overdue:'🔴',upcoming:'🟡'};
+    list.innerHTML=all.map(r=>{
+      const diff=r.days_remaining;
+      const isOv=diff<0;
+      const level=isOv?'critical':(diff<=1?'critical':'warning');
+      const label=isOv?`Overdue by ${Math.abs(diff)} day(s)`:diff===0?'Due Today':`Due in ${diff} day(s)`;
+      return `<div class="rd-item" onclick="openInvoicePanel('${r._id}');toggleReminders()">
+        <div class="rd-icon ${level}">${isOv?'🔴':'🟡'}</div>
+        <div class="rd-body">
+          <div class="rd-vendor">${r.vendor_name}</div>
+          <div class="rd-meta">Due: ${r.due_date} &nbsp;·&nbsp; Rs.${parseFloat(r.total_amount||0).toFixed(2)}</div>
+          <span class="rd-tag ${level}">${label}</span>
+        </div>
+      </div>`;
+    }).join('');
+  }catch(e){list.innerHTML='<div class="rd-empty">Could not load reminders</div>';}
+}
 
-  allInvoices.forEach(inv=>{
-    if((inv.status||'').toLowerCase()==='paid')return;
-    const due=parseDueDate(inv.due_date);
-    if(!due)return;
-    due.setHours(0,0,0,0);
-    const diff=Math.round((due-today)/(1000*60*60*24));
-
-    let level=null,label=null;
-    if(diff<0){level='critical';label=`Overdue by ${Math.abs(diff)} day${Math.abs(diff)!==1?'s':''}`; }
-    else if(diff<=2){level='critical';label=diff===0?'Due Today':`Due in ${diff} day${diff!==1?'s':''}`;}
-    else if(diff<=7){level='warning';label=`Due in ${diff} days (this week)`;}
-    else if(diff<=30){level='info';label=`Due in ${diff} days (this month)`;}
-
-    if(level) reminders.push({inv,diff,level,label,due});
-  });
-
-  // sort: overdue first, then soonest
-  reminders.sort((a,b)=>a.diff-b.diff);
-
-  // update dot
-  const dot=document.getElementById("notifDot");
-  if(dot) dot.style.display=reminders.length?'block':'none';
-
-  if(reminders.length===0){
-    list.innerHTML='<div class="rd-empty">✅ No upcoming due dates</div>';
-    return;
-  }
-
-  const icons={critical:'🔴',warning:'🟡',info:'🔵'};
-  list.innerHTML=reminders.map(r=>`
-    <div class="rd-item" onclick="openInvoicePanel('${r.inv._id}');toggleReminders()">
-      <div class="rd-icon ${r.level}">${icons[r.level]}</div>
-      <div class="rd-body">
-        <div class="rd-vendor">${r.inv.vendor_name}</div>
-        <div class="rd-meta">Due: ${r.inv.due_date} &nbsp;·&nbsp; Rs.${parseFloat(r.inv.total_amount||0).toFixed(2)}</div>
-        <span class="rd-tag ${r.level}">${r.label}</span>
+async function loadReminderWidgets(){
+  try{
+    const d=await fetch(API+"/reminders/dashboard").then(r=>r.json());
+    const up=d.upcoming||[];
+    const ov=d.overdue||[];
+    const due7=up.filter(i=>i.days_remaining<=7).length;
+    const due3=up.filter(i=>i.days_remaining<=3).length;
+    const due1=up.filter(i=>i.days_remaining<=1).length;
+    const el=document.getElementById("reminderWidgets");if(!el)return;
+    el.innerHTML=`
+      <div class="rem-widget info" onclick="show('invoices',null)">
+        <div class="rw-icon">📅</div>
+        <div class="rw-body"><div class="rw-num">${due7}</div><div class="rw-label">Due in 7 Days</div></div>
       </div>
-    </div>`).join('');
+      <div class="rem-widget warning" onclick="show('invoices',null)">
+        <div class="rw-icon">⚠️</div>
+        <div class="rw-body"><div class="rw-num">${due3}</div><div class="rw-label">Due in 3 Days</div></div>
+      </div>
+      <div class="rem-widget critical" onclick="show('invoices',null)">
+        <div class="rw-icon">🔔</div>
+        <div class="rw-body"><div class="rw-num">${due1}</div><div class="rw-label">Due Tomorrow</div></div>
+      </div>
+      <div class="rem-widget overdue" onclick="show('invoices',null)">
+        <div class="rw-icon">🔴</div>
+        <div class="rw-body"><div class="rw-num">${ov.length}</div><div class="rw-label">Overdue Invoices</div></div>
+      </div>
+      <div class="rem-widget amount" onclick="show('invoices',null)">
+        <div class="rw-icon">💰</div>
+        <div class="rw-body"><div class="rw-num">Rs.${(d.total_overdue_amount+d.total_due_this_week).toFixed(0)}</div><div class="rw-label">Total Outstanding</div></div>
+      </div>`;
+    // update notification dot
+    const dot=document.getElementById("notifDot");
+    if(dot)dot.style.display=(ov.length||due1)?'block':'none';
+  }catch(e){console.error(e);}
 }
 
 // close dropdown when clicking outside

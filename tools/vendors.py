@@ -5,8 +5,18 @@ def get_or_create_vendor(name):
     vendor = vendors_col.find_one({"name": name})
     if vendor:
         return str(vendor["_id"])
-    result = vendors_col.insert_one({"name": name})
+    result = vendors_col.insert_one({"name": name, "email": ""})
     return str(result.inserted_id)
+
+def update_vendor_email(vendor_id: str, email: str):
+    vendors_col.update_one(
+        {"_id": ObjectId(vendor_id)},
+        {"$set": {"email": email}}
+    )
+
+def get_vendor_email(vendor_name: str) -> str:
+    v = vendors_col.find_one({"name": vendor_name})
+    return (v or {}).get("email", "") or ""
 
 def get_all_vendors():
     vendors = []
@@ -17,6 +27,7 @@ def get_all_vendors():
         vendors.append({
             "vendor_id": vid,
             "name": v["name"],
+            "email": v.get("email", ""),
             "total_invoices": len(invoices),
             "total_amount": total
         })
@@ -37,7 +48,9 @@ def get_vendor_detail(vendor_id):
         "category": "Income" if i.get("invoice_type") == "outgoing" else "Expense"
     } for i in invoices]
     return {
+        "vendor_id": str(vendor["_id"]),
         "name": vendor["name"],
+        "email": vendor.get("email", ""),
         "total_invoices": len(invoices),
         "total_amount": sum(amounts),
         "avg_amount": round(sum(amounts) / len(amounts), 2) if amounts else 0,

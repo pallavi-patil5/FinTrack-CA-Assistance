@@ -11,10 +11,13 @@ from routes import (
     finance_routes,
     report_routes,
     auth_routes,
-    chat_routes
+    chat_routes,
+    reminder_routes,
 )
+from tools.reminder_scheduler import start_scheduler
 
 app = FastAPI()
+start_scheduler()
 
 # ---------------------------
 # STATIC FILES
@@ -100,6 +103,7 @@ app.include_router(finance_routes.router)
 app.include_router(report_routes.router)
 app.include_router(auth_routes.router)
 app.include_router(chat_routes.router)
+app.include_router(reminder_routes.router)
 
 
 # ---------------------------

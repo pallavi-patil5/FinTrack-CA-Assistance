@@ -18,15 +18,30 @@ env/
 .env/
 ENV/
 
-# Environment variables
+# Environment variables — contains secrets, never commit
 .env
 
 # MongoDB
 *.bson
 *.mongorc.js
 
-# Uploads (user files)
+# Uploads (user invoice files)
 uploads/
+
+# Preprocessed / temp images from OCR pipeline
+temp_*/
+*.preprocessed.*
+cleaned_*/
+
+# EasyOCR / model cache
+.EasyOCR/
+model_cache/
+*.pth
+*.pt
+
+# APScheduler job store (if using SQLite backend)
+jobs.sqlite
+apscheduler.db
 
 # IDE
 .vscode/
@@ -48,6 +63,7 @@ logs/
 
 # Test / temp
 test.py
+probe_paddle.py
 seed.py
 *.tmp
 *.bak
