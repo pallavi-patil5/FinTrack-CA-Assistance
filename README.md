@@ -1,120 +1,121 @@
-# 🚀 StartupSarthi
+# StartupSarthi
 
-> AI-powered financial management platform for startups — invoice OCR, bookkeeping, vendor tracking, financial calculations, and automated due-date reminders in one dashboard.
+AI-powered financial management platform for startups. Automates invoice processing via OCR and LLM, tracks vendors, manages bookkeeping, computes GST and financial metrics, and sends automated due-date email reminders — all from a single dashboard.
 
 ---
 
-## ✨ Features
+## Features
 
-| Module | Description |
+- **Invoice OCR Pipeline** — Upload PDF/image invoices; OpenCV preprocessing → EasyOCR extraction → LLaMA 3 parsing extracts vendor, GSTIN, tax breakdown, line items with confidence scoring
+- **Vendor Management** — Auto-creates vendors from invoices; supports email assignment and per-vendor invoice history
+- **Bookkeeping** — Add, edit, and delete income/expense transactions; view income/expense/balance summary
+- **Financial Calculators** — ROI, profit margin, cash flow, loan EMI, GST (inclusive/exclusive)
+- **Due-Date Reminders** — APScheduler job runs daily at 08:00; sends email reminders at 7, 3, and 1 day(s) before due date and marks overdue invoices
+- **AI Chatbot** — Financial Q&A powered by LLaMA 3 running locally via Ollama
+- **PDF Reports** — Generate downloadable financial reports via ReportLab
+- **Session Auth** — Cookie-based login with itsdangerous-signed sessions
+
+---
+
+## Tech Stack
+
+| Layer | Technology |
 |---|---|
-| 📄 Invoice Management | Upload invoices via OCR, extract data using LLaMA 3, store in MongoDB |
-| 🏢 Vendor Tracking | Auto-create vendors from invoices, store vendor email, view per-vendor invoice history and stats |
-| 💰 Bookkeeping | Add income/expense transactions, view balance summary |
-| 📊 Financial Calculations | ROI, Profit Margin, Cash Flow, Loan EMI, GST computation |
-| 🤖 AI Chatbot | Ask financial questions powered by local LLaMA 3 via Ollama |
-| 🔐 Authentication | Session-based login with cookie auth |
-| 🔔 Due-Date Reminders | Automatic daily reminders at 7, 3, 1 days before due date and on overdue |
-| 📧 Email Notifications | Outgoing invoices → reminder sent to vendor; Incoming invoices → reminder sent to you |
+| Backend | FastAPI + Uvicorn (Python 3.10+) |
+| Database | MongoDB (PyMongo) |
+| OCR | OpenCV preprocessing + EasyOCR |
+| PDF parsing | PyMuPDF (fitz) |
+| AI / LLM | Ollama — LLaMA 3 (local, no API key) |
+| Scheduler | APScheduler |
+| Email | Python smtplib — Gmail SMTP (TLS) |
+| Frontend | Vanilla HTML / CSS / JS + Chart.js + Lucide icons |
 
 ---
 
-## 🛠 Tech Stack
-
-- **Backend** — FastAPI (Python)
-- **Database** — MongoDB (local)
-- **OCR** — Tesseract OCR + Pillow
-- **AI/LLM** — Ollama (LLaMA 3) — runs fully local, no API key needed
-- **Scheduler** — APScheduler (daily background job)
-- **Email** — Python smtplib via Gmail SMTP
-- **Frontend** — Vanilla HTML/CSS/JS with Chart.js and Lucide icons
-
----
-
-## 📁 Project Structure
+## Project Structure
 
 ```
 EDAI6/
 ├── config/
-│   ├── auth.py                # Session auth
-│   └── settings.py            # MongoDB + env config
+│   ├── auth.py                # Session signing & verification
+│   └── settings.py            # Env config + MongoDB collections
 ├── models/
-│   └── schemas.py             # Pydantic models
+│   └── schemas.py             # Pydantic request/response models
 ├── routes/
-│   ├── auth_routes.py
-│   ├── chat_routes.py
-│   ├── finance_routes.py      # Bookkeeping + calculations
-│   ├── invoice_routes.py
-│   ├── reminder_routes.py     # Due-date reminder APIs
-│   ├── report_routes.py
-│   └── vendor_routes.py
+│   ├── auth_routes.py         # Login / logout
+│   ├── chat_routes.py         # AI chatbot endpoint
+│   ├── finance_routes.py      # Bookkeeping CRUD + financial calculators
+│   ├── invoice_routes.py      # Invoice upload, list, detail
+│   ├── reminder_routes.py     # Reminder queries + manual trigger
+│   ├── report_routes.py       # PDF report generation
+│   └── vendor_routes.py       # Vendor list, detail, email update
 ├── services/
-│   ├── invoice_service.py
-│   ├── reminder_service.py    # Reminder query + overdue marking logic
-│   └── vendor_service.py
+│   ├── invoice_service.py     # End-to-end OCR → LLM → MongoDB pipeline
+│   └── reminder_service.py    # Reminder query & overdue marking logic
 ├── static/
 │   ├── css/styles.css
 │   └── js/dashboard.js
 ├── templates/
-│   ├── index.html
+│   ├── index.html             # Main dashboard
 │   ├── invoice_detail.html
+│   ├── vendors.html
 │   └── login.html
 ├── tools/
-│   ├── bookkeeping.py         # Transaction CRUD
-│   ├── chatbot.py             # Ollama chat
-│   ├── email_service.py       # Gmail SMTP email sender
-│   ├── finance.py             # ROI, EMI, GST, etc.
-│   ├── invoice.py             # Invoice CRUD
-│   ├── llm.py                 # LLM invoice parsing
-│   ├── ocr.py                 # Tesseract OCR
-│   ├── reminder_scheduler.py  # APScheduler daily job
-│   ├── reports.py             # PDF generation
-│   └── vendors.py             # Vendor CRUD
+│   ├── bookkeeping.py         # Transaction CRUD helpers
+│   ├── chatbot.py             # Ollama chat wrapper
+│   ├── document_parser.py     # EasyOCR layout + multi-pattern field extractor
+│   ├── email_service.py       # Gmail SMTP sender
+│   ├── finance.py             # ROI, EMI, GST, margin, cash flow
+│   ├── invoice.py             # Invoice CRUD helpers
+│   ├── llm.py                 # LLaMA 3 invoice parser
+│   ├── ocr.py                 # Plain text extraction (DOCX / TXT)
+│   ├── preprocessing.py       # OpenCV image preprocessing pipeline
+│   ├── reminder_scheduler.py  # APScheduler daily job setup
+│   ├── reports.py             # ReportLab PDF generation
+│   └── vendors.py             # Vendor CRUD helpers
 ├── uploads/                   # Uploaded invoice files (gitignored)
 ├── .env                       # Environment variables (gitignored)
 ├── main.py                    # FastAPI app entry point
-└── requirements.txt
+├── requirements.txt
+└── test.py                    # Pipeline health-check script
 ```
 
 ---
 
-## ⚙️ Setup
+## Prerequisites
 
-### Prerequisites
+| Tool | Version | Link |
+|---|---|---|
+| Python | 3.10+ | https://python.org |
+| MongoDB Community | Any recent | https://www.mongodb.com/try/download/community |
+| Ollama | Latest | https://ollama.com |
 
-| Tool | Download |
-|---|---|
-| Python 3.10+ | https://python.org |
-| MongoDB Community | https://www.mongodb.com/try/download/community |
-| Tesseract OCR | https://github.com/UB-Mannheim/tesseract/wiki |
-| Ollama | https://ollama.com |
+> Tesseract OCR is **not required** — the pipeline uses EasyOCR.
 
 ---
 
-### 1. Clone the repository
+## Setup
+
+### 1. Clone and create virtual environment
 
 ```bash
 git clone https://github.com/your-username/startupsarthi.git
 cd startupsarthi
-```
 
-### 2. Create virtual environment
-
-```bash
 python -m venv venv
 venv\Scripts\activate        # Windows
-source venv/bin/activate     # macOS/Linux
+# source venv/bin/activate   # macOS / Linux
 ```
 
-### 3. Install dependencies
+### 2. Install dependencies
 
 ```bash
 pip install -r requirements.txt
 ```
 
-### 4. Configure environment
+### 3. Configure environment
 
-Create a `.env` file in the root directory:
+Create a `.env` file in the project root:
 
 ```env
 MONGODB_URI=mongodb://localhost:27017/
@@ -126,12 +127,10 @@ ADMIN_PASSWORD=admin123
 OLLAMA_URL=http://localhost:11434/api/generate
 OLLAMA_MODEL=llama3
 
-TESSERACT_PATH=C:\Program Files\Tesseract-OCR\tesseract.exe
-
 UPLOAD_DIR=uploads
 SECRET_KEY=your-secret-key-here
 
-# Email / SMTP
+# Gmail SMTP
 SMTP_HOST=smtp.gmail.com
 SMTP_PORT=587
 SMTP_USER=your-gmail@gmail.com
@@ -139,119 +138,142 @@ SMTP_PASS=xxxx xxxx xxxx xxxx
 NOTIFY_EMAIL=your-gmail@gmail.com
 ```
 
-### 5. Gmail App Password setup
+### 4. Gmail App Password
 
-Gmail requires an App Password for SMTP (your regular password will not work):
+Gmail requires an App Password — your regular password will not work over SMTP.
 
-1. Go to [myaccount.google.com](https://myaccount.google.com)
-2. Enable **2-Step Verification** under Security
-3. Search **App passwords** → Select app: Mail, device: Windows Computer
-4. Copy the generated 16-character password into `SMTP_PASS`
+1. Go to [myaccount.google.com](https://myaccount.google.com) → Security
+2. Enable **2-Step Verification**
+3. Search **App passwords** → generate one for Mail / Windows Computer
+4. Paste the 16-character password into `SMTP_PASS`
 
-### 6. Install and start Ollama
+### 5. Start Ollama and pull LLaMA 3
 
 ```bash
-# Pull LLaMA 3 model (one-time, ~4GB)
-ollama pull llama3
-
-# Start Ollama server (keep this running)
-ollama serve
+ollama pull llama3   # one-time download (~4 GB)
+ollama serve         # keep running in background
 ```
 
-### 7. Start MongoDB
+### 6. Start MongoDB
 
-MongoDB runs as a Windows service automatically after installation. To verify:
+MongoDB runs as a Windows service after installation. Verify with:
 
 ```bash
 mongosh
 ```
 
-### 8. Run the application
+### 7. Run the application
 
 ```bash
 python main.py
 ```
 
-Visit **http://localhost:8000** in your browser.
+Open **http://localhost:8000** in your browser.
 
-Default credentials:
-- Username: `admin`
-- Password: `admin123`
+Default credentials: `admin` / `admin123`
 
 ---
 
-## 🗄️ MongoDB Collections
+## Health Check
 
-| Collection | Description |
-|---|---|
-| `invoices` | Uploaded invoices with OCR-extracted data, GST breakdown, and `payment_status` |
-| `vendors` | Auto-created vendor records including `email` field |
-| `transactions` | Income and expense transactions |
-| `reminders` | Auto-generated reminder records per invoice per threshold |
+Run the built-in pipeline health check to verify all components before use:
+
+```bash
+python test.py
+```
+
+Checks: MongoDB connection, Ollama reachability, LLaMA 3 model availability, OpenCV preprocessing, EasyOCR extraction, document parser field extraction, and full end-to-end invoice pipeline.
 
 ---
 
-## 🔔 Reminder & Email System
+## Invoice Processing Pipeline
 
-### How it works
+```
+Upload (PDF / JPG / PNG)
+        │
+        ▼
+OpenCV Preprocessing
+  Grayscale → Denoise → CLAHE → Deskew → Sharpen
+        │
+        ▼
+EasyOCR Layout Extraction
+  Bounding-box grouping → line reconstruction → field regex matching
+  (GSTIN, invoice no., date, CGST/SGST/IGST, subtotal, total)
+        │
+        ▼
+LLaMA 3 Enrichment  (via Ollama)
+  Fills vendor name, customer name, and any fields missed by OCR
+        │
+        ▼
+MongoDB  (invoices collection)
+  Merged result + confidence scores persisted
+```
 
-The scheduler runs **every day at 08:00 AM** and checks all unpaid invoices.
+---
 
-| Days Remaining | Action |
+## Reminder & Email System
+
+The scheduler fires every day at **08:00 AM** and checks all unpaid invoices.
+
+| Condition | Action |
 |---|---|
-| 7, 3, 1 days before due | Send reminder email |
-| Overdue (`today > due_date`) | Mark invoice as `Overdue` in MongoDB + send email |
+| 7, 3, or 1 day(s) before due date | Send reminder email |
+| Past due date | Mark invoice `Overdue` + send email |
 
-### Email routing logic
+Email routing:
 
-| Invoice Type | Meaning | Email sent to |
+| Invoice Type | Meaning | Email recipient |
 |---|---|---|
-| `outgoing` | I raised the invoice — vendor owes me | Vendor's email (set in vendor panel) |
-| `incoming` | Vendor raised the invoice — I owe them | Me (`NOTIFY_EMAIL`) |
+| `outgoing` | You raised the invoice — vendor owes you | Vendor email (set in Vendors panel) |
+| `incoming` | Vendor raised the invoice — you owe them | `NOTIFY_EMAIL` from `.env` |
 
-### Setting vendor email
-
-Open the **Vendors** section → click any vendor → enter email in the **Vendor Email** field → click **Save**.
-
-### Manual trigger (for testing)
+To manually trigger a check:
 
 ```
-POST http://localhost:8000/reminders/run-check
+POST /reminders/run-check
 ```
 
 ---
 
-## 📌 API Endpoints
+## API Reference
+
+### Authentication
+| Method | Endpoint | Description |
+|---|---|---|
+| `POST` | `/auth/login` | Login and set session cookie |
+| `POST` | `/auth/logout` | Clear session cookie |
 
 ### Invoices
 | Method | Endpoint | Description |
 |---|---|---|
+| `POST` | `/upload-invoice` | Upload and process invoice (OCR + LLM) |
 | `GET` | `/invoices/list/{user_id}` | List all invoices |
 | `GET` | `/invoice/detail/{id}` | Get single invoice detail |
-| `POST` | `/upload-invoice` | Upload and process invoice via OCR + LLM |
 
 ### Vendors
 | Method | Endpoint | Description |
 |---|---|---|
 | `GET` | `/vendors` | List all vendors with stats |
-| `GET` | `/vendor/{id}/detail` | Get vendor detail with invoice history |
+| `GET` | `/vendor/{id}/detail` | Vendor detail with invoice history |
 | `PUT` | `/vendor/{id}/email` | Set or update vendor email |
 
-### Transactions & Summary
+### Bookkeeping
 | Method | Endpoint | Description |
 |---|---|---|
-| `GET` | `/summary/{user_id}` | Income/expense/balance summary |
+| `GET` | `/summary/{user_id}` | Income / expense / balance summary |
 | `GET` | `/transactions/{user_id}` | List all transactions |
-| `POST` | `/transactions/add` | Add new transaction |
+| `POST` | `/transactions/add` | Add transaction |
+| `PUT` | `/transactions/update/{id}` | Update transaction |
+| `DELETE` | `/transactions/delete/{id}` | Delete transaction |
 
-### Financial Calculations
-| Method | Endpoint | Description |
+### Financial Calculators
+| Method | Endpoint | Inputs |
 |---|---|---|
-| `POST` | `/calculate/roi` | Return on Investment |
-| `POST` | `/calculate/margin` | Profit margin |
-| `POST` | `/calculate/cashflow` | Cash flow analysis |
-| `POST` | `/calculate/emi` | Loan EMI calculator |
-| `POST` | `/calculate/gst` | GST computation |
+| `POST` | `/calculate/roi` | `investment`, `net_profit` |
+| `POST` | `/calculate/margin` | `revenue`, `cost` |
+| `POST` | `/calculate/cashflow` | `inflows`, `outflows` |
+| `POST` | `/calculate/emi` | `principal`, `annual_rate`, `tenure_months` |
+| `POST` | `/calculate/gst` | `amount`, `rate`, `inclusive` |
 
 ### Reminders
 | Method | Endpoint | Description |
@@ -259,7 +281,7 @@ POST http://localhost:8000/reminders/run-check
 | `GET` | `/reminders/upcoming` | Invoices due within 7 days |
 | `GET` | `/reminders/overdue` | All overdue invoices |
 | `GET` | `/reminders/dashboard` | Combined summary with totals |
-| `POST` | `/reminders/run-check` | Manually trigger daily reminder job |
+| `POST` | `/reminders/run-check` | Manually trigger daily job |
 
 ### Chat
 | Method | Endpoint | Description |
@@ -268,26 +290,37 @@ POST http://localhost:8000/reminders/run-check
 
 ---
 
-## 🔒 Environment Variables
+## MongoDB Collections
 
-| Variable | Description | Default |
-|---|---|---|
-| `MONGODB_URI` | MongoDB connection string | `mongodb://localhost:27017/` |
-| `DATABASE_NAME` | MongoDB database name | `EDAI6` |
-| `ADMIN_USERNAME` | Login username | `admin` |
-| `ADMIN_PASSWORD` | Login password | `admin123` |
-| `OLLAMA_URL` | Ollama API endpoint | `http://localhost:11434/api/generate` |
-| `OLLAMA_MODEL` | LLM model name | `llama3` |
-| `TESSERACT_PATH` | Path to Tesseract executable | `C:\Program Files\Tesseract-OCR\tesseract.exe` |
-| `SECRET_KEY` | Session signing key | — |
-| `SMTP_HOST` | SMTP server host | `smtp.gmail.com` |
-| `SMTP_PORT` | SMTP server port | `587` |
-| `SMTP_USER` | Gmail address used to send emails | — |
-| `SMTP_PASS` | Gmail App Password (16-char) | — |
-| `NOTIFY_EMAIL` | Your email — receives incoming invoice reminders | — |
+| Collection | Description |
+|---|---|
+| `invoices` | Processed invoices — OCR/LLM fields, GST breakdown, `payment_status`, confidence scores |
+| `vendors` | Auto-created vendor records including optional `email` |
+| `transactions` | Income and expense entries |
+| `reminders` | One record per invoice per reminder threshold |
 
 ---
 
-## 📄 License
+## Environment Variables
+
+| Variable | Description |
+|---|---|
+| `MONGODB_URI` | MongoDB connection string |
+| `DATABASE_NAME` | MongoDB database name |
+| `ADMIN_USERNAME` | Dashboard login username |
+| `ADMIN_PASSWORD` | Dashboard login password |
+| `OLLAMA_URL` | Ollama API endpoint |
+| `OLLAMA_MODEL` | Model name (e.g. `llama3`) |
+| `UPLOAD_DIR` | Directory for uploaded invoice files |
+| `SECRET_KEY` | Secret key for session signing |
+| `SMTP_HOST` | SMTP server (default: `smtp.gmail.com`) |
+| `SMTP_PORT` | SMTP port (default: `587`) |
+| `SMTP_USER` | Gmail address used to send emails |
+| `SMTP_PASS` | Gmail App Password (16 characters) |
+| `NOTIFY_EMAIL` | Your email — receives incoming invoice reminders |
+
+---
+
+## License
 
 MIT License — free to use and modify.
