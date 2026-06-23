@@ -9,9 +9,8 @@ python-multipart
 reportlab
 itsdangerous
 requests
-bsonw
 python-docx
-opencv-python
+opencv-python-headless
 numpy
 easyocr
 apscheduler

@@ -1,0 +1,53 @@
+services:
+
+  # ─── FastAPI Application ───────────────────────────────────
+  app:
+    build: .
+    container_name: startupsarthi_app
+    ports:
+      - "8000:8000"
+    env_file:
+      - .env
+    environment:
+      MONGODB_URI: mongodb://mongo:27017/
+      OLLAMA_URL: http://ollama:11434/api/generate
+    volumes:
+      - uploads_data:/app/uploads
+      - easyocr_cache:/app/.EasyOCR
+    depends_on:
+      mongo:
+        condition: service_healthy
+      ollama:
+        condition: service_started
+    restart: unless-stopped
+
+  # ─── MongoDB ───────────────────────────────────────────────
+  mongo:
+    image: mongo:7
+    container_name: startupsarthi_mongo
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_data:/data/db
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  # ─── Ollama (LLaMA 3) ──────────────────────────────────────
+  ollama:
+    image: ollama/ollama:latest
+    container_name: startupsarthi_ollama
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama_models:/root/.ollama
+    restart: unless-stopped
+
+volumes:
+  mongo_data:
+  ollama_models:
+  uploads_data:
+  easyocr_cache:

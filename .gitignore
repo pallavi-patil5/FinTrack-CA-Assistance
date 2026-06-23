@@ -20,6 +20,7 @@ ENV/
 
 # Environment variables — contains secrets, never commit
 .env
+.env.example
 
 # MongoDB
 *.bson

@@ -21,7 +21,7 @@ AI-powered financial management platform for startups. Automates invoice process
 
 | Layer | Technology |
 |---|---|
-| Backend | FastAPI + Uvicorn (Python 3.10+) |
+| Backend | FastAPI + Uvicorn (Python 3.11+) |
 | Database | MongoDB (PyMongo) |
 | OCR | OpenCV preprocessing + EasyOCR |
 | PDF parsing | PyMuPDF (fitz) |
@@ -29,6 +29,7 @@ AI-powered financial management platform for startups. Automates invoice process
 | Scheduler | APScheduler |
 | Email | Python smtplib — Gmail SMTP (TLS) |
 | Frontend | Vanilla HTML / CSS / JS + Chart.js + Lucide icons |
+| Containers | Docker + Docker Compose |
 
 ---
 
@@ -75,6 +76,9 @@ EDAI6/
 │   └── vendors.py             # Vendor CRUD helpers
 ├── uploads/                   # Uploaded invoice files (gitignored)
 ├── .env                       # Environment variables (gitignored)
+├── .env.example               # Environment variable template
+├── docker-compose.yml         # Multi-service Docker setup
+├── Dockerfile                 # App container image
 ├── main.py                    # FastAPI app entry point
 ├── requirements.txt
 └── test.py                    # Pipeline health-check script
@@ -84,11 +88,19 @@ EDAI6/
 
 ## Prerequisites
 
+### Local (without Docker)
+
 | Tool | Version | Link |
 |---|---|---|
-| Python | 3.10+ | https://python.org |
+| Python | 3.11+ | https://python.org |
 | MongoDB Community | Any recent | https://www.mongodb.com/try/download/community |
 | Ollama | Latest | https://ollama.com |
+
+### Docker
+
+| Tool | Link |
+|---|---|
+| Docker Desktop | https://www.docker.com/products/docker-desktop |
 
 > Tesseract OCR is **not required** — the pipeline uses EasyOCR.
 
@@ -96,7 +108,37 @@ EDAI6/
 
 ## Setup
 
-### 1. Clone and create virtual environment
+### Option A — Docker (recommended)
+
+Docker Compose spins up all three services (app, MongoDB, Ollama) automatically.
+
+**1. Copy and configure environment**
+
+```bash
+cp .env.example .env
+# Edit .env — set ADMIN_PASSWORD, SECRET_KEY, and SMTP_* values
+# MONGODB_URI and OLLAMA_URL are set automatically by docker-compose
+```
+
+**2. Start all services**
+
+```bash
+docker compose up --build -d
+```
+
+**3. Pull LLaMA 3 into the Ollama container (one-time)**
+
+```bash
+docker exec -it startupsarthi_ollama ollama pull llama3
+```
+
+Open **http://localhost:8000** in your browser.
+
+---
+
+### Option B — Local (manual)
+
+**1. Clone and create virtual environment**
 
 ```bash
 git clone https://github.com/your-username/startupsarthi.git
@@ -107,15 +149,19 @@ venv\Scripts\activate        # Windows
 # source venv/bin/activate   # macOS / Linux
 ```
 
-### 2. Install dependencies
+**2. Install dependencies**
 
 ```bash
 pip install -r requirements.txt
 ```
 
-### 3. Configure environment
+**3. Configure environment**
 
-Create a `.env` file in the project root:
+```bash
+cp .env.example .env
+```
+
+Edit `.env` and set the following:
 
 ```env
 MONGODB_URI=mongodb://localhost:27017/
@@ -130,7 +176,6 @@ OLLAMA_MODEL=llama3
 UPLOAD_DIR=uploads
 SECRET_KEY=your-secret-key-here
 
-# Gmail SMTP
 SMTP_HOST=smtp.gmail.com
 SMTP_PORT=587
 SMTP_USER=your-gmail@gmail.com
@@ -138,7 +183,7 @@ SMTP_PASS=xxxx xxxx xxxx xxxx
 NOTIFY_EMAIL=your-gmail@gmail.com
 ```
 
-### 4. Gmail App Password
+**4. Gmail App Password**
 
 Gmail requires an App Password — your regular password will not work over SMTP.
 
@@ -147,14 +192,14 @@ Gmail requires an App Password — your regular password will not work over SMTP
 3. Search **App passwords** → generate one for Mail / Windows Computer
 4. Paste the 16-character password into `SMTP_PASS`
 
-### 5. Start Ollama and pull LLaMA 3
+**5. Start Ollama and pull LLaMA 3**
 
 ```bash
 ollama pull llama3   # one-time download (~4 GB)
 ollama serve         # keep running in background
 ```
 
-### 6. Start MongoDB
+**6. Start MongoDB**
 
 MongoDB runs as a Windows service after installation. Verify with:
 
@@ -162,7 +207,7 @@ MongoDB runs as a Windows service after installation. Verify with:
 mongosh
 ```
 
-### 7. Run the application
+**7. Run the application**
 
 ```bash
 python main.py
@@ -318,6 +363,8 @@ POST /reminders/run-check
 | `SMTP_USER` | Gmail address used to send emails |
 | `SMTP_PASS` | Gmail App Password (16 characters) |
 | `NOTIFY_EMAIL` | Your email — receives incoming invoice reminders |
+
+> When using Docker Compose, `MONGODB_URI` and `OLLAMA_URL` are automatically overridden with container service names.
 
 ---
 

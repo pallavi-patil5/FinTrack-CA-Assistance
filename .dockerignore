@@ -1,0 +1,41 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyc
+*.egg-info/
+
+# Virtual environment
+venv/
+env/
+.venv/
+
+# Secrets — injected at runtime via env_file
+.env
+
+# Uploaded files — mounted as a volume
+uploads/
+
+# EasyOCR model cache — mounted as a volume
+.EasyOCR/
+
+# APScheduler DB
+*.sqlite
+*.db
+
+# Dev/test files
+test.py
+probe_paddle.py
+
+# IDE & OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Git
+.git/
+.gitignore
+
+# Docs
+README.md
